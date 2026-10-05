@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<style>
+  body{width:340px;margin:0;padding:14px;font:13px/1.4 system-ui,sans-serif;color:#202124}
+  h1{font-size:15px;margin:0 0 10px;display:flex;align-items:center;justify-content:space-between}
+  .pill{font-size:11px;padding:3px 8px;border-radius:999px;background:#e8eaed;color:#5f6368}
+  .pill.on{background:#d93025;color:#fff}
+  button{font:inherit;cursor:pointer;border:1px solid #dadce0;background:#fff;border-radius:8px;padding:7px 10px}
+  button:hover{background:#f1f3f4}
+  #toggle{width:100%;padding:10px;font-weight:600;background:#1a73e8;color:#fff;border:0}
+  #toggle.rec{background:#d93025}
+  label{display:block;font-size:11px;color:#5f6368;margin:10px 0 3px}
+  input,textarea{width:100%;box-sizing:border-box;font:inherit;padding:6px 8px;border:1px solid #dadce0;border-radius:6px}
+  input:disabled{background:#f1f3f4;color:#80868b}
+  .row{display:flex;gap:8px}
+  textarea{height:84px;resize:vertical;font-family:ui-monospace,monospace;font-size:12px}
+  .stats{margin:12px 0 8px;padding:8px 10px;background:#f8f9fa;border-radius:8px;font-size:12px}
+  .actions{display:flex;gap:6px;flex-wrap:wrap}
+  .actions button{flex:1}
+  .danger{color:#d93025;border-color:#f1b9b4}
+  .hint{font-size:11px;color:#5f6368;margin-top:10px}
+</style>
+</head>
+<body>
+  <h1>Typing Collector <span id="pill" class="pill">inactivo</span></h1>
+  <button id="toggle">Iniciar grabación</button>
+
+  <div class="row">
+    <div><label for="pid">participant_id</label><input id="pid"></div>
+    <div><label for="sid">session_id</label><input id="sid"></div>
+  </div>
+
+  <label for="allow">Sitios donde se graba (uno por línea)</label>
+  <textarea id="allow" spellcheck="false"></textarea>
+  <button id="addSite" style="margin-top:6px;width:100%">+ Añadir sitio de la pestaña actual</button>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="actions">
+    <button id="endSample">Cerrar muestra</button>
+    <button id="export">Exportar CSV</button>
+    <button id="clear" class="danger">Eliminar datos</button>
+  </div>
+  <div class="hint" id="hint"></div>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -135,7 +135,7 @@
     const id = pool.next++;
     if (pool.end - pool.next < 2000) ensurePool();
     const p = { id, sample: sampleId, participant: settings.participant_id,
-                session: settings.session_id, key: e.key, keyCode: e.keyCode };
+                session: settings.session_id, key: e.key, keyCode: e.code };
     pressing.set(k, p);
     record('down', e, p);
     pressesInSample++;

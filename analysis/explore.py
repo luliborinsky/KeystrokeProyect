@@ -18,7 +18,7 @@ except ImportError:
     SKLEARN_OK = False
 
 
-MAX_FILES = 5
+MAX_FILES = 12
 DEFAULT_HOLD_MAX = 2_000.0       # ms
 DEFAULT_PAUSE_MAX = 2_000.0      # ms
 DEFAULT_WINDOW = 30
@@ -105,11 +105,11 @@ def read_and_clean(path, hold_max=DEFAULT_HOLD_MAX, pause_max=DEFAULT_PAUSE_MAX)
 
 
 def summarize_cleaning(raw_path, clean):
-    raw = pd.read_csv(raw_path)
-    raw_pairs = raw[raw["event"].astype(str).str.lower().eq("down")].shape[0]
-    removed = raw_pairs - len(clean)
+    base = pd.read_csv(raw_path)
+    base_pairs = base[base["event"].astype(str).str.lower().eq("down")].shape[0]
+    removed = base_pairs - len(clean)
     print(f"\n[{Path(raw_path).name}]")
-    print(f"  original key-down events: {raw_pairs:,}")
+    print(f"  original key-down events: {base_pairs:,}")
     print(f"  valid keystrokes:   {len(clean):,}")
     print(f"  removed:             {removed:,}")
     print(f"  overlaps:             {int(clean['overlap'].sum()):,}")
@@ -138,9 +138,9 @@ def plot_timeline(clean, sample_id=None):
 
     # To keep the figure manageable, show at most 80 keystrokes.
     sample = sample.sort_values("down_ms").head(80).copy()
-    t0 = sample["down_ms"].min()
-    sample["start_s"] = (sample["down_ms"] - t0) / 1000
-    sample["end_s"] = (sample["up_ms"] - t0) / 1000
+    t = sample["down_ms"].min()
+    sample["start_s"] = (sample["down_ms"] - t) / 1000
+    sample["end_s"] = (sample["up_ms"] - t) / 1000
 
     fig, ax = plt.subplots(figsize=(14, 6))
     y = np.arange(len(sample))
@@ -215,7 +215,7 @@ def digraph_counts(all_clean):
                 rows.append((str(p), a, b))
 
     if not rows:
-        print("\nNot enough data to compute digraphs.")
+        print("Not enough data to compute digraphs.")
         return pd.DataFrame()
 
     dig = pd.DataFrame(rows, columns=["participant", "k1", "k2"])
@@ -223,7 +223,7 @@ def digraph_counts(all_clean):
     table = dig.groupby(["participant", "digraph"]).size().reset_index(name="count")
     table = table.sort_values(["participant", "count"], ascending=[True, False])
 
-    print("\n=== TOP DIGRAPHS POR PSEUDÓNIMO ===")
+    print("TOP DIGRAPHS POR PSEUDÓNIMO")
     for p, g in table.groupby("participant"):
         print(f"\n{p}")
         print(g.head(15).to_string(index=False))
@@ -249,7 +249,6 @@ def digraph_counts(all_clean):
 
 
 def feature_vector(g):
-    """Compact feature vector comparable across windows."""
     dur = g["duration_ms"].to_numpy(float)
     inter = g.loc[g["valid_interkey"], "inter_down_ms"].dropna().to_numpy(float)
 
@@ -333,7 +332,6 @@ def plot_2d_windows(windows):
     plt.tight_layout(rect=[0, 0, 1, 0.92])
     plt.show()
 
-    # MDS can be expensive for many points; limit to 250.
     n = min(len(Xz), 250)
     rng = np.random.default_rng(42)
     idx = rng.choice(len(Xz), n, replace=False) if len(Xz) > n else np.arange(len(Xz))
@@ -455,7 +453,7 @@ def stability_report(all_clean, windows):
         )
 
     
-    print("\nCriterion: a participant is considered stable if the median CV of the features")
+    print("Criterion: a participant is considered stable if the median CV of the features")
     print("across files from the same participant is <= 0.30. This is an exploratory")
     print("rule, not a statistical identity test.")
 
@@ -491,7 +489,7 @@ def main():
     participants = sorted({
         str(p) for d in all_clean for p in d["participant_id"].unique()
     })
-    print("\n=== DATASET ===")
+    print("DATASET")
     print(f"Files: {len(paths)}")
     print(f"Participants: {', '.join(participants)}")
 
@@ -504,13 +502,11 @@ def main():
 
     # Ventanas + comparaciones.
     windows = make_windows(all_clean, args.window, args.step)
-    print(f"\nWindows created: {len(windows)}")
+    print("Windows created: {len(windows)}")
     compare_users(windows)
     stability_report(all_clean, windows)
     plot_2d_windows(windows)
 
-    print("\n=== DONE ===")
-    print("Figures are displayed on screen and tables/summaries are printed to the console.")
 
 
 if __name__ == "__main__":

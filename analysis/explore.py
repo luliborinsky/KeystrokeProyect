@@ -1,27 +1,4 @@
-#!/usr/bin/env python3
-"""
-Keystroke dynamics exploratory data analysis.
 
-Uso:
-    python keyboard_eda.py P01_S1_fixed.csv
-    python keyboard_eda.py P01_S1_fixed.csv P01_S2.csv P02_S1.csv
-    python keyboard_eda.py *.csv --sample-id 1
-
-Máximo: 5 CSV.
-
-El script:
-- elimina pulsaciones > 2 s;
-- removes Backspace and equivalent correction keys;
-- removes long pauses from timing calculations (default > 2 s);
-- pairs down/up events using press_id;
-- detects overlapping keystrokes;
-- plots a timeline for one message/sample;
-- plots duration and inter-key time histograms;
-- counts digraphs by participant;
-- compares participants;
-- evaluates stability when multiple files belong to the same participant;
-- creates keystroke windows and projects them with PCA and, when possible, MDS.
-"""
 
 import argparse
 from pathlib import Path

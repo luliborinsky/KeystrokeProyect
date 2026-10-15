@@ -40,6 +40,8 @@
   const keyId = (e) => e.code || ('k' + e.keyCode);
 
   function isRecordableTarget(el) {
+    if (!el) return false;
+    if (el.nodeType === 3) el = el.parentElement;
     if (!el || el.nodeType !== 1) return false;
     if (el.tagName === 'INPUT') {
       const t = (el.getAttribute('type') || 'text').toLowerCase();
@@ -49,7 +51,11 @@
       return TEXT_INPUT_TYPES.has(t);
     }
     if (el.tagName === 'TEXTAREA') return true;
-    return el.isContentEditable === true;
+    if (el.isContentEditable === true) return true;
+    if (el.closest && (el.closest('[contenteditable="true"], [contenteditable=""], textarea') || el.closest('input:not([type="password"])'))) {
+      return true;
+    }
+    return false;
   }
 
   // ---------- visible indicator ----------
@@ -106,6 +112,13 @@
     try {
       const r = await send({ type: 'allocPressIds' });
       if (r && r.ok) pool = { next: r.start, end: r.end };
+      else if (pool.next >= pool.end) {
+        pool = { next: Date.now() * 1000, end: Date.now() * 1000 + 100000 };
+      }
+    } catch (_) {
+      if (pool.next >= pool.end) {
+        pool = { next: Date.now() * 1000, end: Date.now() * 1000 + 100000 };
+      }
     } finally { requestingPool = false; }
   }
 
@@ -113,8 +126,8 @@
   function record(type, e, p) {
     const ts = Number((performance.timeOrigin + e.timeStamp).toFixed(3));   // ms epoch, sub-ms
     buffer.push([p.participant, p.session, p.sample, type, p.keyCode, ts, p.id, p.key]);
-    if (buffer.length >= 200) flush();
-    else if (!flushTimer) flushTimer = setTimeout(flush, 1000);
+    if (buffer.length >= 50) flush();
+    else if (!flushTimer) flushTimer = setTimeout(flush, 500);
   }
 
   function flush() {
@@ -131,7 +144,11 @@
     const k = keyId(e);
     if (pressing.has(k)) return;                  // repeat sin flag .repeat
     if (!isRecordableTarget(target(e))) return;
-    if (pool.next >= pool.end) { ensurePool(); return; }
+    if (pool.next >= pool.end) {
+      pool.next = Date.now() * 1000 + Math.floor(Math.random() * 1000);
+      pool.end = pool.next + 100000;
+      ensurePool();
+    }
     const id = pool.next++;
     if (pool.end - pool.next < 2000) ensurePool();
     const p = { id, sample: sampleId, participant: settings.participant_id,

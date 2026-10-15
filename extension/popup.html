@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <style>
@@ -24,24 +24,24 @@
 </style>
 </head>
 <body>
-  <h1>Typing Collector <span id="pill" class="pill">inactivo</span></h1>
-  <button id="toggle">Iniciar grabación</button>
+  <h1>Typing Collector <span id="pill" class="pill">inactive</span></h1>
+  <button id="toggle">Start recording</button>
 
   <div class="row">
     <div><label for="pid">participant_id</label><input id="pid"></div>
     <div><label for="sid">session_id</label><input id="sid"></div>
   </div>
 
-  <label for="allow">Sitios donde se graba (uno por línea)</label>
+  <label for="allow">Websites to record (one per line)</label>
   <textarea id="allow" spellcheck="false"></textarea>
-  <button id="addSite" style="margin-top:6px;width:100%">+ Añadir sitio de la pestaña actual</button>
+  <button id="addSite" style="margin-top:6px;width:100%">+ Add site from current tab</button>
 
   <div class="stats" id="stats"></div>
 
   <div class="actions">
-    <button id="endSample">Cerrar muestra</button>
-    <button id="export">Exportar CSV</button>
-    <button id="clear" class="danger">Eliminar datos</button>
+    <button id="endSample">End sample</button>
+    <button id="export">Export CSV</button>
+    <button id="clear" class="danger">Clear data</button>
   </div>
   <div class="hint" id="hint"></div>
   <script src="popup.js"></script>

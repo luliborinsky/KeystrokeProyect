@@ -8,36 +8,56 @@ const parseAllow = (txt) => [...new Set(txt.split(/\n/).map(s => s.trim().toLowe
 
 function render() {
   const on = settings.enabled;
-  $('pill').textContent = on ? 'grabando' : 'inactivo';
+  $('pill').textContent = on ? 'recording' : 'inactive';
   $('pill').classList.toggle('on', on);
-  $('toggle').textContent = on ? 'Detener grabación' : 'Iniciar grabación';
+  $('toggle').textContent = on ? 'Stop recording' : 'Start recording';
   $('toggle').classList.toggle('rec', on);
   $('pid').disabled = $('sid').disabled = on;
   if (document.activeElement !== $('pid')) $('pid').value = settings.participant_id;
   if (document.activeElement !== $('sid')) $('sid').value = settings.session_id;
   if (document.activeElement !== $('allow')) $('allow').value = settings.allowlist.join('\n');
-  $('stats').textContent = `Eventos: ${meta.count} · Muestra actual: ${sampleId} · Muestras marcadas: ${flagged.length}`;
-  $('hint').textContent = `Hoy es ${new Date().toISOString().slice(0, 10)}. Usa un session_id distinto por día. ` +
-    `Escribe sin pegar, dictar ni autocompletar. No se graban campos de contraseña.`;
+  $('stats').textContent = `Events: ${meta.count} · Current sample: ${sampleId} · Flagged samples: ${flagged.length}`;
+  $('hint').textContent = `Today is ${new Date().toISOString().slice(0, 10)}. Use a different session_id per day. ` +
+    `Type naturally without pasting, dictating or autocompleting. Password fields are never recorded.`;
 }
 
 async function load() {
-  const d = await store.get(['settings', 'sampleState', 'meta', 'flagged']);
-  if (d.settings) settings = d.settings;
-  sampleId = (d.sampleState && d.sampleState.sample_id) || 1;
-  if (d.meta) meta = d.meta;
-  flagged = d.flagged || [];
+  try {
+    const d = await store.get(['settings', 'sampleState', 'meta', 'flagged']);
+    if (d.settings) settings = { ...settings, ...d.settings };
+    sampleId = (d.sampleState && d.sampleState.sample_id) || 1;
+    if (d.meta) meta = d.meta;
+    flagged = d.flagged || [];
+  } catch (e) {
+    console.error(e);
+  }
   render();
 }
 
-const save = (partial) => chrome.runtime.sendMessage({ type: 'saveSettings', settings: partial });
+async function save(partial) {
+  try {
+    const { settings: old } = await store.get('settings');
+    const next = { ...settings, ...(old || {}), ...partial };
+    if (next.participant_id !== old?.participant_id || next.session_id !== old?.session_id) {
+      await store.set({ sampleState: { sample_id: 1 } });
+    }
+    await store.set({ settings: next });
+    settings = next;
+    render();
+    try {
+      chrome.runtime.sendMessage({ type: 'saveSettings', settings: partial }).catch(() => {});
+    } catch (_) {}
+  } catch (err) {
+    console.error('Error saving settings:', err);
+  }
+}
 
 $('toggle').onclick = async () => {
   if (!settings.enabled) {
     const pid = $('pid').value.trim(), sid = $('sid').value.trim();
     const allow = parseAllow($('allow').value);
-    if (!pid || !sid) return alert('Indica participant_id y session_id.');
-    if (!allow.length) return alert('Añade al menos un sitio donde grabar.');
+    if (!pid || !sid) return alert('Please enter participant_id and session_id.');
+    if (!allow.length) return alert('Add at least one website to record.');
     await save({ enabled: true, participant_id: pid, session_id: sid, allowlist: allow });
   } else {
     await save({ enabled: false });
@@ -57,7 +77,7 @@ $('addSite').onclick = async () => {
     if (!list.includes(h)) list.push(h);
     $('allow').value = list.join('\n');
     save({ allowlist: list });
-  } catch (_) { alert('No se pudo leer la URL de esta pestaña.'); }
+  } catch (_) { alert('Could not read the URL of this tab.'); }
 };
 
 $('endSample').onclick = () => chrome.runtime.sendMessage({ type: 'endSample', sample_id: sampleId });
@@ -78,7 +98,7 @@ $('export').onclick = async () => {
   const data = await store.get(keys);
   const lines = ['participant_id,session_id,sample_id,event,key_code,timestamp_ms,press_id,key'];
   for (const k of keys) for (const row of (data[k] || [])) lines.push(row.map(esc).join(','));
-  if (lines.length === 1) return alert('No hay datos que exportar.');
+  if (lines.length === 1) return alert('No data to export.');
   const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
   download(`keystrokes_${stamp}.csv`, lines.join('\n') + '\n');
   const { flagged: f } = await store.get('flagged');
@@ -89,7 +109,7 @@ $('export').onclick = async () => {
 };
 
 $('clear').onclick = async () => {
-  if (!confirm('¿Eliminar TODOS los datos registrados? Esta acción no se puede deshacer.')) return;
+  if (!confirm('Delete ALL recorded data? This action cannot be undone.')) return;
   await chrome.runtime.sendMessage({ type: 'clearAll' });
 };
 

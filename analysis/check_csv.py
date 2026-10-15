@@ -145,7 +145,7 @@ def per_sample_summary(df):
                 text_chars.append(k)
             # skip modifier keys, arrows, etc.
         text = "".join(text_chars)
-        print(f"   Sample {sid:3d}: {n:3d} keys → \"{text}\"")
+        print(f"   Sample {int(sid):3d}: {int(n):3d} keys → \"{text}\"")
 
 
 def plot_sample(df, sample_id=None):

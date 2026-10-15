@@ -29,10 +29,10 @@
     catch (_) { handleDead(); return Promise.resolve(null); }
   }
 
-  function handleDead() {   // la extensión se recargó: esta página ya no puede registrar
+  function handleDead() {   // extension reloaded: this page can no longer record
     if (!active) return;
     active = false;
-    warn = 'Extensión recargada: refresca la página';
+    warn = 'Extension reloaded: please refresh the page';
     updateIndicator(true);
   }
 
@@ -43,7 +43,7 @@
     if (!el || el.nodeType !== 1) return false;
     if (el.tagName === 'INPUT') {
       const t = (el.getAttribute('type') || 'text').toLowerCase();
-      if (t === 'password') return false;                       // nunca contraseñas
+      if (t === 'password') return false;                       // never passwords
       const ac = (el.getAttribute('autocomplete') || '').toLowerCase();
       if (/password|cc-/.test(ac)) return false;
       return TEXT_INPUT_TYPES.has(t);
@@ -52,7 +52,7 @@
     return el.isContentEditable === true;
   }
 
-  // ---------- indicador visible ----------
+  // ---------- visible indicator ----------
   let host = null, shadow = null;
 
   function updateIndicator(force) {
@@ -76,7 +76,7 @@
     b.classList.toggle('warn', !!warn);
     shadow.querySelector('.t').textContent = warn
       ? '⚠ ' + warn
-      : `REC · ${settings.participant_id}/${settings.session_id} · muestra ${sampleId}`;
+      : `REC · ${settings.participant_id}/${settings.session_id} · sample ${sampleId}`;
   }
 
   // ---------- estado / ajustes ----------
@@ -174,7 +174,7 @@
     flaggedLocal.add(key);
     send({ type: 'flag', participant_id: settings.participant_id, session_id: settings.session_id,
            sample_id: sampleId, reason });
-    warn = 'Pegado/autocompletado detectado: muestra marcada';
+    warn = 'Paste/autocomplete detected: sample flagged';
     updateIndicator();
   }
 

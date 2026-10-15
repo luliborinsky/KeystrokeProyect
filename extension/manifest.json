@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Typing Dynamics Collector",
   "version": "1.0.0",
-  "description": "Registra eventos brutos de teclado (down/up) en sitios elegidos para un proyecto de dinámica de escritura. Datos 100% locales.",
+  "description": "Records raw keystroke events (down/up) on selected websites for a keystroke dynamics project. 100% local data.",
   "permissions": ["storage", "unlimitedStorage", "activeTab"],
   "background": { "service_worker": "background.js" },
   "action": { "default_popup": "popup.html", "default_title": "Typing Collector" },

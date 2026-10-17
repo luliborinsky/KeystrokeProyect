@@ -18,7 +18,7 @@ except ImportError:
     SKLEARN_OK = False
 
 
-MAX_FILES = 12
+MAX_FILES = 15
 DEFAULT_HOLD_MAX = 2_000.0       # ms
 DEFAULT_PAUSE_MAX = 2_000.0      # ms
 DEFAULT_WINDOW = 30
@@ -502,7 +502,7 @@ def main():
 
     # Ventanas + comparaciones.
     windows = make_windows(all_clean, args.window, args.step)
-    print("Windows created: {len(windows)}")
+    print(f"Windows created: {len(windows)}")
     compare_users(windows)
     stability_report(all_clean, windows)
     plot_2d_windows(windows)

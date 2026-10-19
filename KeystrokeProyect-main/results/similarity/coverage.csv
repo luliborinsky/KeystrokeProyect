@@ -1,0 +1,6 @@
+window,n_windows,median_window_duration_s,median_shared_digraphs,median_shared_items,comparable_pairs
+25,951,5.3732,2.0,11.0,0.1408
+50,473,12.4169,8.0,22.0,0.8944
+100,234,29.07,20.0,39.0,0.9999
+200,115,64.5776,40.0,63.0,1.0
+400,53,137.1063,62.0,88.0,1.0

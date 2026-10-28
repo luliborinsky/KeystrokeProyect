@@ -39,12 +39,21 @@ TEST_PHRASE_RE = r"roanl|tie5|5roa"   # collector test phrase '.tie5Roanl' (with
 FILE_RE = re.compile(r"(P\d+)_S0*(\d+)", re.IGNORECASE)
 
 
+
 def ids_from_filename(path):
-    """'data/P03_S03.csv' -> ('P03', 'S3')."""
-    m = FILE_RE.search(Path(path).stem)
+    """Extract participant and session IDs from filenames."""
+    filename = Path(path).stem
+    m = re.search(r"(P\d+)_S0*(\d+)$", filename, re.IGNORECASE)
+
     if not m:
-        raise ValueError(f"{path}: file name must look like P07_S1.csv")
-    return m.group(1).upper(), f"S{int(m.group(2))}"
+        raise ValueError(
+            f"{path}: filename must look like P05_S01.csv or P07_S1.csv"
+        )
+
+    participant = m.group(1).upper()
+    session = f"S{int(m.group(2))}"
+
+    return participant, session
 
 
 def read_raw(path):
@@ -73,6 +82,77 @@ def read_raw(path):
     return df[~bad].copy(), repaired, dropped
 
 
+
+def normalize_key_code(code, key):
+    """Normalize physical key codes across collector versions."""
+
+    raw = "" if pd.isna(code) else str(code).strip()
+    value = "" if pd.isna(key) else str(key)
+
+    if raw in {"ShiftLeft", "ShiftRight", "16"}:
+        return "Shift"
+
+    if raw and not raw.isdigit() and raw not in {
+        "Unidentified", "nan"
+    }:
+        return raw
+
+    special_keys = {
+        "Backspace": "Backspace",
+        "Enter": "Enter",
+        "CapsLock": "CapsLock",
+        "Escape": "Escape",
+        "Delete": "Delete",
+        "ArrowLeft": "ArrowLeft",
+        "ArrowRight": "ArrowRight",
+        " ": "Space",
+    }
+
+    if value in special_keys:
+        return special_keys[value]
+
+    if len(value) == 1 and value.isalpha() and value.isascii():
+        return "Key" + value.upper()
+
+    if len(value) == 1 and value.isdigit():
+        return "Digit" + value
+
+    punctuation = {
+        ",": "Comma",
+        ".": "Period",
+        "'": "Quote",
+        ";": "Semicolon",
+        "/": "Slash",
+        "-": "Minus",
+        "=": "Equal",
+        "[": "BracketLeft",
+        "\\": "Backslash",
+        "`": "Backquote",
+    }
+
+    if value in punctuation:
+        return punctuation[value]
+
+    legacy_codes = {
+        "8": "Backspace",
+        "13": "Enter",
+        "20": "CapsLock",
+        "32": "Space",
+        "37": "ArrowLeft",
+        "39": "ArrowRight",
+        "46": "Delete",
+        "188": "Comma",
+        "190": "Period",
+    }
+
+    if raw in legacy_codes:
+        return legacy_codes[raw]
+
+    if not raw or raw in {"Unidentified", "nan"}:
+        return "Unidentified"
+
+    return "LegacyKeyCode_" + raw
+
 def to_keystrokes(df, participant, session, hold_max=HOLD_MAX_MS):
     """Pair each down with its up (press_id) -> one row per keystroke, in time order."""
     downs = df[df.event == "down"].sort_values("timestamp_ms").drop_duplicates("press_id")
@@ -87,9 +167,10 @@ def to_keystrokes(df, participant, session, hold_max=HOLD_MAX_MS):
     ks["participant"] = participant
     ks["session"] = session
     # physical key (layout independent); fall back on the character if code is unknown
-    code = ks["key_code"].fillna("").astype(str)
-    unknown = code.isin(["", "Unidentified", "nan"])
-    ks["key_code"] = np.where(unknown, "Char_" + ks["key"].astype(str), code)
+    ks["key_code"] = [
+    normalize_key_code(code, key)
+    for code, key in zip(ks["key_code"], ks["key"])
+    ]
     ks = ks.sort_values("down_ms").reset_index(drop=True)
     cols = ["participant", "session", "sample", "key", "key_code",
             "down_ms", "up_ms", "hold_ms", "press_id"]
